@@ -2,9 +2,16 @@ plugins {
     java
     kotlin("jvm").version(Dependencies.Kotlin.version)
     kotlin("kapt").version(Dependencies.Kotlin.version)
+    id(Dependencies.ShadowJar.id).version(Dependencies.ShadowJar.version).apply(true)
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 group = "net.atlantis"
+val pluginName = "NoPluginCommand"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -15,10 +22,11 @@ repositories {
 }
 
 dependencies {
-    compile(Dependencies.Paper.api)
+    api(Dependencies.Paper.api)
     compileOnly(Dependencies.Spigot.annotations)
     kapt(Dependencies.Spigot.annotations)
-    compileOnly(Dependencies.Kotlin.stdlib)
+    api(Dependencies.Kotlin.stdlib)
+    testImplementation(Dependencies.JUnit.core)
 }
 
 buildscript {
@@ -31,8 +39,14 @@ buildscript {
 }
 
 tasks {
-    withType<Jar> {
-        from(configurations.getByName("compile").map { if (it.isDirectory) it else zipTree(it) })
+    shadowJar {
+        archiveBaseName.set(pluginName)
+        archiveClassifier.set("")
+        archiveVersion.set(archiveVersion.get())
+        mergeServiceFiles()
+        dependencies {
+            exclude(dependency(Dependencies.Paper.api))
+        }
     }
 
     withType<Test>().configureEach {
